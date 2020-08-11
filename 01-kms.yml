@@ -21,7 +21,6 @@ Resources:
 
 Outputs:
   KMSKey:
-    Description: Use this to encrypt your SSL private key in SSM Parameter Store
     Value: !Ref KMSKey
     Export:
       Name: Kolide-KMSKey

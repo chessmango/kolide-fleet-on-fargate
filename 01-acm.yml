@@ -1,0 +1,31 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Sample ACM certificate for Kolide on Fargate
+Parameters:
+  FQDN:
+    Type: String
+    AllowedPattern: ^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$
+    MinLength: 1
+    MaxLength: 63
+    ConstraintDescription: Must be a fully qualified domain name
+    Description: Fully qualified domain name you wish to use
+    Default: kolide.example.com
+
+  AlternativeFQDN:
+    Type: CommaDelimitedList
+    AllowedPattern: ^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(,(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})){0,}$
+    MinLength: 0
+    ConstraintDescription: Must be a fully qualified domain name
+    Description: Comma-separated list of alternative FQDNs for your certificate. Leave blank for none
+    Default: www.kolide.example.com,test.kolide.example.com
+
+  ValidationMethod:
+    Type:
+
+Resources:
+  ACMCert:
+    Type: AWS::CertificateManager::Certificate
+      Properties:
+        DomainName: !Ref FQDN
+        SubjectAlternativeNames: !Ref AlternativeFQDN
+        ValidationMethod: !Ref ValidationMethod

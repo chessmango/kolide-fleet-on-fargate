@@ -14,8 +14,8 @@ Resources:
         ToPort: 80
       - CidrIp: 10.0.0.0/16
         IpProtocol: tcp
-        FromPort: 443
-        ToPort: 443
+        FromPort: 8080
+        ToPort: 8080
 
   RedisSecurityGroup:
     Type: AWS::EC2::SecurityGroup

@@ -7,16 +7,6 @@ Parameters:
     Description: dd if=/dev/urandom bs=24 count=1 status=none | base64
     NoEcho: true
 
-  KolideACMCert:
-    Type: String
-    Default: arn:aws:acm:us-east-1:123456789012:certificate/fd2733e2-d8a2-4fec-9933-8982278ef896
-    Description: ARN of your imported ACM cert
-
-  KolideSSMPrivKeyParam:
-    Type: String
-    Default: KolideSSLCertificatePrivateKey
-    Description: Name of your SSM SecureString parameter for Kolide's SSL certificate private key
-
 
 Resources:
   ECSCluster:
@@ -30,41 +20,6 @@ Resources:
       LogGroupName: !Ref AWS::StackName
       RetentionInDays: 30
 
-
-# Roles
-  KolideTaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: ecs-tasks.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      Policies:
-      - PolicyName: !Sub ${AWS::StackName}-KolideTaskPolicy
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - kms:Describe*
-            - kms:Decrypt
-            Resource:
-              - Fn::Sub:
-                - arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKey}
-                - KMSKey: !ImportValue Kolide-KMSKey
-          - Effect: Allow
-            Action:
-            - ssm:GetParameters
-            Resource:
-            - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${KolideSSMPrivKeyParam}'
-          - Effect: Allow
-            Action:
-            - acm:GetCertificate
-            Resource: !Ref KolideACMCert
 
   KolideExecutionRole:
     Type: AWS::IAM::Role
@@ -143,10 +98,10 @@ Resources:
             awslogs-stream-prefix: kolide-https-redirect
 
       - Name: kolide
-        Image: !ImportValue Kolide-ECRRepo
+        Image: kolide/fleet
         MemoryReservation: 256
         PortMappings:
-        - ContainerPort: 443
+        - ContainerPort: 8080
         Environment:
         - Name: KOLIDE_AUTH_JWT_KEY
           Value: !Ref KolideAuthJWTKey
@@ -159,19 +114,11 @@ Resources:
           Value: !ImportValue Kolide-AuroraDBName
         - Name: KOLIDE_MYSQL_USERNAME
           Value: !ImportValue Kolide-AuroraClusterUsername
-        - Name: KOLIDE_SERVER_TLS
-          Value: 'true'
-        - Name: KOLIDE_CERTIFICATE_ARN
-          Value: !Ref KolideACMCert
-        - Name: KOLIDE_SSL_PRIVKEY_SSM_PARAM
-          Value: !Ref KolideSSMPrivKeyParam
         - Name: KOLIDE_REDIS_ADDRESS
           Value:
             Fn::Sub:
               - '${RedisEndpoint}:6379'
               - RedisEndpoint: !ImportValue Kolide-RedisEndpoint
-        - Name: KOLIDE_SERVER_ADDRESS
-          Value: 0.0.0.0:443
         Secrets:
         - Name: KOLIDE_MYSQL_PASSWORD
           ValueFrom: !ImportValue Kolide-AuroraClusterPassword
@@ -182,8 +129,6 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: kolide-fleet
       ExecutionRoleArn: !GetAtt KolideExecutionRole.Arn
-      TaskRoleArn: !GetAtt KolideTaskRole.Arn
-
 
 # Service
   KolideService:
@@ -206,7 +151,7 @@ Resources:
         ContainerPort: 80
         TargetGroupArn: !Ref HTTPSRedirectTargetGroup
       - ContainerName: kolide
-        ContainerPort: 443
+        ContainerPort: 8080
         TargetGroupArn: !Ref KolideTargetGroup
     DependsOn: KolideLoadBalancerListener
 
@@ -227,7 +172,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !ImportValue Kolide-VPC
-      Port: 443
+      Port: 8080
       Protocol: TCP
       TargetType: ip
       HealthCheckIntervalSeconds: 30
@@ -250,7 +195,7 @@ Resources:
     Properties:
       LoadBalancerArn: !ImportValue Kolide-NetworkLoadBalancer
       Port: 443
-      Protocol: TCP
+      Protocol: TLS
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref KolideTargetGroup

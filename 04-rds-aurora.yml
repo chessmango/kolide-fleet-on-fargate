@@ -2,23 +2,31 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Sample Aurora cluster for Kolide on Fargate
 Parameters:
+  AuroraClusterName:
+    Type: String
+    AllowedPattern: ^[a-zA-Z](-{0,1}[a-zA-Z0-9]+){0,}$
+    MinLength: 1
+    MaxLength: 63
+    ConstraintDescription:
+    Default: kolideaurorasample
+
   AuroraDBName:
     Type: String
-    Default: kolideaurorasample
     AllowedPattern: ^[a-z]*$
-    ConstraintDescription: Must contain only lower-case alphabetical characters
     MinLength: 1
     MaxLength: 64
+    ConstraintDescription: Must contain only lower-case alphabetical characters, 1-64 characters
     Description: Name of initial database
+    Default: kolideaurorasample
 
   AuroraClusterUsername:
     Type: String
-    Default: kolideaurorasample
     AllowedPattern: ^[a-z]*$
-    ConstraintDescription: Must contain only lower-case alphabetical characters
     MinLength: 1
     MaxLength: 41
+    ConstraintDescription: Must contain only lower-case alphabetical characters, 1-41 characters
     Description: Name of database master user
+    Default: kolideaurorasample
 
 
 Resources:
