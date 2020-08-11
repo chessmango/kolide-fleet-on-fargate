@@ -4,9 +4,7 @@ Description: Sample ECS service for Kolide on Fargate
 Parameters:
   KolideAuthJWTKey:
     Type: String
-    Description: |
-      JWT key for Kolide, passed as KOLIDE_AUTH_JWT_KEY. Easy command:
-      dd if=/dev/urandom bs=24 count=1 status=none | base64
+    Description: dd if=/dev/urandom bs=24 count=1 status=none | base64
     NoEcho: true
 
   KolideACMCert:
