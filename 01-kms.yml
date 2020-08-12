@@ -1,22 +1,19 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample KMS key for Kolide on Fargate
+Description: KMS key for Kolide Fleet on Fargate
 Resources:
   KMSKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: KMS key used to encrypt various parts of the Kolide stack
       EnableKeyRotation: true
       KeyPolicy:
-        Version: '2012-10-17'
-        Id: !Sub ${AWS::StackName}-KMSKey
+        Version: 2012-10-17
         Statement:
-        - Sid: Enable IAM User Permissions
-          Effect: Allow
+        - Effect: Allow
           Principal:
-            AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
           Action: kms:*
-          Resource: "*"
+          Resource: '*'
 
 
 Outputs:

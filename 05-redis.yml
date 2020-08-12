@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample ElastiCache Redis cluster for Kolide on Fargate
+Description: ElastiCache Redis cluster for Kolide Fleet on Fargate
 Resources:
   RedisSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
@@ -22,7 +22,7 @@ Resources:
       EngineVersion: 5.0.6
       NumCacheClusters: 1
       PreferredMaintenanceWindow: sun:00:00-sun:01:30
-      ReplicationGroupDescription: !Sub 'ReplicationGroup for ${AWS::StackName}'
+      ReplicationGroupDescription: !Sub ${AWS::StackName}-ReplicationGroup
       SecurityGroupIds:
         - !ImportValue Kolide-RedisSecurityGroup
       CacheSubnetGroupName: !Ref RedisSubnetGroup

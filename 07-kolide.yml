@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample ECS service for Kolide on Fargate
+Description: Kolide Fleet on Fargate
 Parameters:
   KolideAuthJWTKey:
     Type: String
@@ -10,32 +10,32 @@ Parameters:
 
 Resources:
   ECSCluster:
-    Type: "AWS::ECS::Cluster"
+    Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Ref AWS::StackName
+      ClusterName: !Sub ${AWS::StackName}-Cluster
 
   CloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Ref AWS::StackName
+      LogGroupName: !Sub /ecs/${AWS::StackName}
       RetentionInDays: 30
 
 
-  KolideExecutionRole:
+  TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: "Allow"
+        - Effect: Allow
           Principal:
             Service: ecs-tasks.amazonaws.com
           Action:
-          - "sts:AssumeRole"
+          - sts:AssumeRole
       Policies:
-      - PolicyName: !Sub ${AWS::StackName}-KolideExecutionPolicy
+      - PolicyName: !Sub ${AWS::StackName}-TaskExecutionPolicy
         PolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
           - Effect: Allow
             Action:
@@ -49,7 +49,7 @@ Resources:
             Action:
             - kms:ListKeys
             - kms:ListAliases
-            Resource: "*"
+            Resource: '*'
           - Effect: Allow
             Action:
             - secretsmanager:GetSecretValue
@@ -74,8 +74,8 @@ Resources:
 
 
 ## Task definition
-  KolideTask:
-    Type: "AWS::ECS::TaskDefinition"
+  KolideTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
     Properties:
       Family: kolide-fargate
       NetworkMode: awsvpc
@@ -93,9 +93,9 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref AWS::StackName
+            awslogs-group: !Ref CloudWatchLogsGroup
             awslogs-region: !Ref AWS::Region
-            awslogs-stream-prefix: kolide-https-redirect
+            awslogs-stream-prefix: !Sub ${AWS::StackName}-HTTPS
 
       - Name: kolide
         Image: kolide/fleet
@@ -108,7 +108,7 @@ Resources:
         - Name: KOLIDE_MYSQL_ADDRESS
           Value:
             Fn::Sub:
-              - '${AuroraEndPoint}:3306'
+              - ${AuroraEndPoint}:3306
               - AuroraEndPoint: !ImportValue Kolide-AuroraClusterEndpoint
         - Name: KOLIDE_MYSQL_DATABASE
           Value: !ImportValue Kolide-AuroraDBName
@@ -117,7 +117,7 @@ Resources:
         - Name: KOLIDE_REDIS_ADDRESS
           Value:
             Fn::Sub:
-              - '${RedisEndpoint}:6379'
+              - ${RedisEndpoint}:6379
               - RedisEndpoint: !ImportValue Kolide-RedisEndpoint
         Secrets:
         - Name: KOLIDE_MYSQL_PASSWORD
@@ -125,10 +125,10 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref AWS::StackName
+            awslogs-group: !Ref CloudWatchLogsGroup
             awslogs-region: !Ref AWS::Region
-            awslogs-stream-prefix: kolide-fleet
-      ExecutionRoleArn: !GetAtt KolideExecutionRole.Arn
+            awslogs-stream-prefix: !Sub ${AWS::StackName}-Kolide
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
 
 # Service
   KolideService:
@@ -136,13 +136,13 @@ Resources:
     Properties:
       Cluster: !Ref ECSCluster
       DesiredCount: 1
-      TaskDefinition: !Ref KolideTask
+      TaskDefinition: !Ref KolideTaskDefinition
       LaunchType: FARGATE
       PlatformVersion: '1.4.0'
       NetworkConfiguration:
         AwsvpcConfiguration:
           SecurityGroups:
-          - !ImportValue Kolide-SecurityGroup
+          - !ImportValue Kolide-TaskSecurityGroup
           Subnets:
           - !ImportValue Kolide-SubnetPriv0
           - !ImportValue Kolide-SubnetPriv1
@@ -196,6 +196,9 @@ Resources:
       LoadBalancerArn: !ImportValue Kolide-NetworkLoadBalancer
       Port: 443
       Protocol: TLS
+      Certificates:
+      - CertificateArn: !ImportValue Kolide-ACMCert
+      SslPolicy: ELBSecurityPolicy-FS-1-2-Res-2019-08
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref KolideTargetGroup

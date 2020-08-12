@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample VPC for Kolide on Fargate
+Description: VPC for Kolide Fleet on Fargate
 
 Resources:
   VPC:
@@ -26,7 +26,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-RouteTablePub
+        Value: !Sub ${AWS::StackName}-RouteTablePub
   RoutePub:
     Type: AWS::EC2::Route
     Properties:
@@ -43,7 +43,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-SubnetPub0
+        Value: !Sub ${AWS::StackName}-SubnetPub0
   RouteTableAssociationPub0:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -59,7 +59,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-SubnetPub1
+        Value: !Sub ${AWS::StackName}-SubnetPub1
   RouteTableAssociationPub1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -73,22 +73,34 @@ Resources:
     DependsOn: InternetGatewayAttachement
     Properties:
       Domain: vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-NatEIP0
   NatGateway0:
     Type: AWS::EC2::NatGateway
     Properties:
       SubnetId: !Ref SubnetPub0
       AllocationId: !GetAtt NatEIP0.AllocationId
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-NatGateway0
 
   NatEIP1:
     Type: AWS::EC2::EIP
     DependsOn: InternetGatewayAttachement
     Properties:
       Domain: vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-NatEIP1
   NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
       SubnetId: !Ref SubnetPub1
       AllocationId: !GetAtt NatEIP1.AllocationId
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-NatGateway1
 
 
 # Private Subnets
@@ -100,14 +112,14 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-SubnetPriv0
+        Value: !Sub ${AWS::StackName}-SubnetPriv0
   RouteTablePriv0:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-RouteTablePriv0
+        Value: !Sub ${AWS::StackName}-RouteTablePriv0
   RouteTableAssociationPriv0:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -128,14 +140,14 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-SubnetPriv1
+        Value: !Sub ${AWS::StackName}-SubnetPriv1
   RouteTablePriv1:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Kolide-RouteTablePriv1
+        Value: !Sub ${AWS::StackName}-RouteTablePriv1
   RouteTableAssociationPriv1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:

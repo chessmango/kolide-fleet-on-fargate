@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample Network Load Balancer for Kolide on Fargate
+Description: Network Load Balancer for Kolide Fleet on Fargate
 Resources:
   NetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -12,7 +12,7 @@ Resources:
       - !ImportValue Kolide-SubnetPub1
       Tags:
       - Key: Name
-        Value: !Sub 'Network Load Balancer for ${AWS::StackName}'
+        Value: !Ref AWS::StackName
 
 
 Outputs:
@@ -26,3 +26,8 @@ Outputs:
     Value: !GetAtt NetworkLoadBalancer.DNSName
     Export:
       Name: Kolide-NetworkLoadBalancerFQDN
+
+  NetworkLoadBalancerHostedZone:
+    Value: !GetAtt NetworkLoadBalancer.CanonicalHostedZoneID
+    Export:
+      Name: Kolide-NetworkLoadBalancerHostedZone

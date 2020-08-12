@@ -2,31 +2,23 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Sample Aurora cluster for Kolide on Fargate
 Parameters:
-  AuroraClusterName:
-    Type: String
-    AllowedPattern: ^[a-zA-Z](-{0,1}[a-zA-Z0-9]+){0,}$
-    MinLength: 1
-    MaxLength: 63
-    ConstraintDescription:
-    Default: kolideaurorasample
-
   AuroraDBName:
     Type: String
-    AllowedPattern: ^[a-z]*$
+    AllowedPattern: ^[a-zA-Z0-9]+$
     MinLength: 1
     MaxLength: 64
-    ConstraintDescription: Must contain only lower-case alphabetical characters, 1-64 characters
+    ConstraintDescription: 1–64 alphanumeric characters
     Description: Name of initial database
-    Default: kolideaurorasample
+    Default: kolidefleet
 
   AuroraClusterUsername:
     Type: String
-    AllowedPattern: ^[a-z]*$
+    AllowedPattern: ^[a-zA-Z]([a-zA-Z0-9]){0,}$
     MinLength: 1
-    MaxLength: 41
-    ConstraintDescription: Must contain only lower-case alphabetical characters, 1-41 characters
-    Description: Name of database master user
-    Default: kolideaurorasample
+    MaxLength: 16
+    ConstraintDescription: 1-16 alphanumeric characters. First character must be a letter
+    Description: Name of cluster master user
+    Default: kolidefleet
 
 
 Resources:
@@ -74,7 +66,7 @@ Resources:
       DBClusterIdentifier: !Ref AuroraCluster
       DBInstanceClass: db.t3.small
       DBParameterGroupName: default.aurora-mysql5.7
-      OptionGroupName: "default:aurora-mysql-5-7"
+      OptionGroupName: default:aurora-mysql-5-7
       DBSubnetGroupName: !Ref AuroraSubnetGroup
 
 

@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample ACM certificate for Kolide on Fargate
+Description: ACM certificate for Kolide Fleet on Fargate
 Parameters:
   FQDN:
     Type: String
@@ -8,24 +8,42 @@ Parameters:
     MinLength: 1
     MaxLength: 63
     ConstraintDescription: Must be a fully qualified domain name
-    Description: Fully qualified domain name you wish to use
+    Description: Fully qualified domain name you wish to use for this certificate
     Default: kolide.example.com
 
-  AlternativeFQDN:
-    Type: CommaDelimitedList
-    AllowedPattern: ^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(,(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})){0,}$
-    MinLength: 0
-    ConstraintDescription: Must be a fully qualified domain name
-    Description: Comma-separated list of alternative FQDNs for your certificate. Leave blank for none
-    Default: www.kolide.example.com,test.kolide.example.com
+  HostedZone:
+    Type: String
+    AllowedPattern: ^[A-Z0-9]+$
+    MinLength: 5
+    MaxLength: 40
+    ConstraintDescription: Must be a Route 53 hosted zone ID
+    Description: Route 53 hosted zone ID for your domain
+    Default: Z06664722SE89SACR5HX1
 
-  ValidationMethod:
-    Type:
 
 Resources:
   ACMCert:
     Type: AWS::CertificateManager::Certificate
-      Properties:
-        DomainName: !Ref FQDN
-        SubjectAlternativeNames: !Ref AlternativeFQDN
-        ValidationMethod: !Ref ValidationMethod
+    Properties:
+      DomainName: !Ref FQDN
+      ValidationMethod: DNS
+      DomainValidationOptions:
+      - DomainName: !Ref FQDN
+        HostedZoneId: !Ref HostedZone
+
+
+Outputs:
+  ACMCert:
+    Value: !Ref ACMCert
+    Export:
+      Name: Kolide-ACMCert
+
+  HostedZone:
+    Value: !Ref HostedZone
+    Export:
+      Name: Kolide-HostedZone
+
+  FQDN:
+    Value: !Ref FQDN
+    Export:
+      Name: Kolide-FQDN

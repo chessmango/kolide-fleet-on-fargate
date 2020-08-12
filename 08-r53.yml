@@ -1,0 +1,13 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Route 53 CNAME for Kolide Fleet on Fargate
+Resources:
+  R53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !ImportValue Kolide-HostedZone
+      Name: !ImportValue Kolide-FQDN
+      Type: A
+      AliasTarget:
+        DNSName: !ImportValue Kolide-NetworkLoadBalancerFQDN
+        HostedZoneId: !ImportValue Kolide-NetworkLoadBalancerHostedZone

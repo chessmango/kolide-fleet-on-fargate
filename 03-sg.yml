@@ -1,12 +1,12 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: Sample security groups for Kolide on Fargate
+Description: Security groups for Kolide Fleet on Fargate
 Resources:
-  KolideSecurityGroup:
+  TaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !ImportValue Kolide-VPC
-      GroupDescription: Allow Kolide task access from VPC
+      GroupDescription: Allow Kolide Fleet task access from VPC
       SecurityGroupIngress:
       - CidrIp: 10.0.0.0/16
         IpProtocol: tcp
@@ -21,37 +21,37 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !ImportValue Kolide-VPC
-      GroupDescription: Allow Redis access from Kolide
+      GroupDescription: Allow Redis access from Kolide Fleet
       SecurityGroupIngress:
-      - SourceSecurityGroupId: !Ref KolideSecurityGroup
+      - SourceSecurityGroupId: !Ref TaskSecurityGroup
         IpProtocol: tcp
         FromPort: 6379
         ToPort: 6379
 
-  MySQLSecurityGroup:
+  AuroraSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !ImportValue Kolide-VPC
-      GroupDescription: Allow MySQL access from Kolide
+      GroupDescription: Allow Aurora MySQL access from Kolide Fleet
       SecurityGroupIngress:
-      - SourceSecurityGroupId: !Ref KolideSecurityGroup
+      - SourceSecurityGroupId: !Ref TaskSecurityGroup
         IpProtocol: tcp
         FromPort: 3306
         ToPort: 3306
 
 
 Outputs:
+  TaskSecurityGroup:
+    Value: !Ref TaskSecurityGroup
+    Export:
+      Name: Kolide-TaskSecurityGroup
+
   RedisSecurityGroup:
     Value: !Ref RedisSecurityGroup
     Export:
       Name: Kolide-RedisSecurityGroup
 
-  KolideSecurityGroup:
-    Value: !Ref KolideSecurityGroup
+  AuroraSecurityGroup:
+    Value: !Ref AuroraSecurityGroup
     Export:
-      Name: Kolide-SecurityGroup
-
-  MySQLSecurityGroup:
-    Value: !Ref MySQLSecurityGroup
-    Export:
-      Name: Kolide-MySQLSecurityGroup
+      Name: Kolide-AuroraSecurityGroup
