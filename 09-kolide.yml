@@ -99,6 +99,10 @@ Resources:
 
       - Name: kolide
         Image: kolide/fleet
+        Command:
+        - '/bin/sh'
+        - '-c'
+        - 'apk add openssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/kolide.key -out /etc/ssl/kolide.crt -subj "/CN=self-signed/" && ln -sf /dev/stdout /tmp/osquery_result && ln -sf /dev/stderr && fleet prepare db && fleet serve'
         MemoryReservation: 256
         PortMappings:
         - ContainerPort: 8080
@@ -119,6 +123,14 @@ Resources:
             Fn::Sub:
               - ${RedisEndpoint}:6379
               - RedisEndpoint: !ImportValue Kolide-RedisEndpoint
+        - Name: KOLIDE_SERVER_TLS
+          Value: 'true'
+        - Name: KOLIDE_SERVER_TLS_COMPATIBILITY
+          Value: 'modern'
+        - Name: KOLIDE_SERVER_CERT
+          Value: '/etc/ssl/kolide.crt'
+        - Name: KOLIDE_SERVER_KEY
+          Value: '/etc/ssl/kolide.key'
         Secrets:
         - Name: KOLIDE_MYSQL_PASSWORD
           ValueFrom: !ImportValue Kolide-AuroraClusterPassword
@@ -127,7 +139,7 @@ Resources:
           Options:
             awslogs-group: !Ref CloudWatchLogsGroup
             awslogs-region: !Ref AWS::Region
-            awslogs-stream-prefix: !Sub ${AWS::StackName}-Kolide
+            awslogs-stream-prefix: !Ref AWS::StackName
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
 
 # Service
@@ -173,7 +185,7 @@ Resources:
     Properties:
       VpcId: !ImportValue Kolide-VPC
       Port: 8080
-      Protocol: TCP
+      Protocol: TLS
       TargetType: ip
       HealthCheckIntervalSeconds: 30
       HealthCheckProtocol: TCP
@@ -199,13 +211,8 @@ Resources:
       Certificates:
       - CertificateArn: !ImportValue Kolide-ACMCert
       SslPolicy: ELBSecurityPolicy-FS-1-2-Res-2019-08
+      AlpnPolicy:
+      - HTTP2Only
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref KolideTargetGroup
-
-
-Outputs:
-  Service:
-    Value: !Ref KolideService
-    Export:
-      Name: Kolide-ECSService

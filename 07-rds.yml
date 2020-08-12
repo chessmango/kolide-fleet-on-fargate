@@ -57,7 +57,7 @@ Resources:
       DBSubnetGroupName: !Ref AuroraSubnetGroup
       DBClusterParameterGroupName: default.aurora-mysql5.7
       VpcSecurityGroupIds:
-      - !ImportValue Kolide-MySQLSecurityGroup
+      - !ImportValue Kolide-AuroraSecurityGroup
 
   AuroraDBInstance:
     Type: AWS::RDS::DBInstance
